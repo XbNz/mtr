@@ -1,0 +1,18 @@
+{
+    "name": "xbnz/mtr",
+    "description": "Framework agnostic package for MTR",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Xbnz\\Mtr\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "AG",
+            "email": "fdwnct@gmail.com"
+        }
+    ],
+    "require": {}
+}
