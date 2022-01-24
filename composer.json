@@ -8,11 +8,21 @@
             "Xbnz\\Mtr\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Xbnz\\Mtr\\Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "AG",
             "email": "fdwnct@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "symfony/process": "^6.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    }
 }
