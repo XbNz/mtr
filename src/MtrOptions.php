@@ -12,7 +12,7 @@ final class MtrOptions
     public const COUNT = '--report-cycles';
     public const NODNS = '--no-dns';
     public const SHOWIPS = '--show-ips';
-    public const ASLOOKUP = '--as-lookup';
+    public const ASLOOKUP = '--aslookup';
     public const PACKETSIZE = '--psize';
     public const BITPATTERN = '--bitpattern';
     public const TOS = '--tos';

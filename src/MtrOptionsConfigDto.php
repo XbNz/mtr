@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Xbnz\Mtr;
 
+use phpDocumentor\Reflection\PseudoTypes\PositiveInteger;
 use PHPUnit\TextUI\XmlConfiguration\Php;
 use Spatie\DataTransferObject\DataTransferObject;
 use Webmozart\Assert\Assert;
@@ -9,8 +12,7 @@ use Webmozart\Assert\Assert;
 class MtrOptionsConfigDto
 {
     public function __construct(
-        public readonly ?int $interval = null,
-        public readonly ?int $count = null,
+        public readonly ?string $interval = null,
         public readonly ?bool $noDns = null,
         public readonly ?bool $showIps = null,
         public readonly ?int $packetSize = null,
@@ -22,13 +24,16 @@ class MtrOptionsConfigDto
         public readonly ?bool $tcp = null,
         public readonly ?int $port = null,
         public readonly ?int $timeout = null,
+        public readonly ?int $count = 10,
         public readonly string $order = 'LDRSNBAWVGJMXI',
         public readonly ?bool $asLookup = true,
         public readonly ?bool $reportWide = true,
         public readonly ?bool $json = true,
-    )
-    {
-        Assert::nullOrPositiveInteger($interval);
+    ) {
+        Assert::nullOrString($interval);
+        if ($interval !== null) {
+            Assert::greaterThan($interval, 0);
+        }
         Assert::nullOrPositiveInteger($count);
         Assert::nullOrPositiveInteger($bitPattern);
         Assert::nullOrPositiveInteger($tos);
