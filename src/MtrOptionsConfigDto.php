@@ -2,7 +2,41 @@
 
 namespace Xbnz\Mtr;
 
+use PHPUnit\TextUI\XmlConfiguration\Php;
+use Spatie\DataTransferObject\DataTransferObject;
+use Webmozart\Assert\Assert;
+
 class MtrOptionsConfigDto
 {
-
+    public function __construct(
+        public readonly ?int $interval = null,
+        public readonly ?int $count = null,
+        public readonly ?bool $noDns = null,
+        public readonly ?bool $showIps = null,
+        public readonly ?int $packetSize = null,
+        public readonly ?int $bitPattern = null,
+        public readonly ?int $tos = null,
+        public readonly ?int $firstTtl = null,
+        public readonly ?int $maxTtl = null,
+        public readonly ?bool $udp = null,
+        public readonly ?bool $tcp = null,
+        public readonly ?int $port = null,
+        public readonly ?int $timeout = null,
+        public readonly string $order = 'LDRSNBAWVGJMXI',
+        public readonly ?bool $asLookup = true,
+        public readonly ?bool $reportWide = true,
+        public readonly ?bool $json = true,
+    )
+    {
+        Assert::nullOrPositiveInteger($interval);
+        Assert::nullOrPositiveInteger($count);
+        Assert::nullOrPositiveInteger($bitPattern);
+        Assert::nullOrPositiveInteger($tos);
+        Assert::lessThan($tos, 255);
+        Assert::nullOrPositiveInteger($firstTtl);
+        Assert::nullOrPositiveInteger($maxTtl);
+        Assert::nullOrPositiveInteger($port);
+        Assert::lessThan($port, 65535);
+        Assert::nullOrPositiveInteger($timeout);
+    }
 }
