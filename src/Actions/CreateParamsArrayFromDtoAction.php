@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Xbnz\Mtr\Actions;
 
 use Illuminate\Support\Collection;
@@ -7,7 +9,7 @@ use Webmozart\Assert\Assert;
 use Xbnz\Mtr\MtrOptions;
 use Xbnz\Mtr\MtrOptionsConfigDto;
 
-class CreateParamsArrayFromDtoAction
+final class CreateParamsArrayFromDtoAction
 {
     public function __invoke(MtrOptionsConfigDto $configDto): array
     {

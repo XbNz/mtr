@@ -4,9 +4,6 @@
 ### Framework-agnostic asynchronous MTR library
 
 
-| **MacOS** users :warning:  The MTR command requires root privileges to work, edit your /etc/sudoers file. |
-|-----------------------------------------------------------------------------------------------------------|
-
 | :warning:  The MTR command requires root privileges for low interval, edit your /etc/sudoers file. |
 |----------------------------------------------------------------------------------------------------|
 
@@ -55,7 +52,9 @@ public function __construct(private MTR $mtr)
 
 public function example()
 {
-    $results = $this->mtr->withIp(['1.1.1.1', '8.8.8.8', ...]);
+    $results = $this->mtr->withIp('1.1.1.1', '8.8.8.8');
+    // OR
+    $results = $this->mtr->withIp(...['1.1.1.1', '8.8.8.8']);
     
     Assert::containsOnlyInstancesOf(
         MtrResult::class,

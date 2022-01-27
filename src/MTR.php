@@ -18,32 +18,26 @@ use Xbnz\Mtr\Actions\CreateParamStringFromDtoAction;
 final class MTR
 {
     private readonly array $parameterArray;
-    private array $hosts;
+    private array $hosts = [];
 
-    public function __construct(MtrOptionsConfigDto $configDto, private LoggerInterface $logger = new NullLogger())
-    {
+    public function __construct(
+        MtrOptionsConfigDto $configDto = new MtrOptionsConfigDto(),
+        private LoggerInterface $logger = new NullLogger(),
+    ) {
         $this->parameterArray = (new CreateParamsArrayFromDtoAction())($configDto);
     }
 
-    public static function build(MtrOptionsConfigDto $configDto = new MtrOptionsConfigDto()): self
-    {
-        return new self($configDto);
+    public static function build(
+        MtrOptionsConfigDto $configDto = new MtrOptionsConfigDto(),
+        LoggerInterface $logger = new NullLogger(),
+    ): self {
+        return new self($configDto, $logger);
     }
 
-    public function withIp(string ...$hosts): self
+    public function withIp(string|int ...$hosts): self
     {
         Collection::make($hosts)
-            ->filter(function ($host) {
-                if ($this->validIpNetwork($host)) {
-                    return true;
-                }
-
-                if ($this->validHostname($host)) {
-                    $this->hosts[] = $host;
-                }
-
-                return false;
-            })
+            ->filter(fn($host) => $this->validIpNetwork($host))
             ->map(
                 fn($parsableNetwork) => Collection::make(
                     Network::parse($parsableNetwork)
@@ -51,6 +45,11 @@ final class MTR
             )
             ->flatten()
             ->tap(fn(Collection $finishedIpList) => $this->hosts[] = $finishedIpList->toArray());
+
+        Collection::make($hosts)
+            ->reject(fn($host) => $this->validIpNetwork($host))
+            ->filter(fn($host) => $this->validHostname($host))
+            ->tap(fn(Collection $finishedHostnameList) => $this->hosts[] = $finishedHostnameList->toArray());
 
         $this->hosts = Collection::make($this->hosts)
             ->flatten()
@@ -61,30 +60,22 @@ final class MTR
         return $this;
     }
 
-    public function execute()
+    public function raw(): Collection
     {
-        Assert::notNull($this->hosts);
-
-        /**
-         * TODO:
-         * Whole bunch of things :(
-         * Make wrappers around the final collection returned on successful responses
-         * Test this method. Of note: make sure the logger works.
-         * Think about a nicer way of dealing with param types. Perhaps all string?
-         * Too tired to write this I'm out.
-         */
+        Assert::true(count($this->hosts) > 0);
 
         [$successful, $failed] = Collection::make($this->hosts)
             ->map(fn (string $host) => new Process(['sudo', 'mtr', $host, ...$this->parameterArray]))
             ->chunk(200)
             ->each($this->processChunk(...))
             ->flatten()
-            ->partition(fn(Process $process) => $process->getExitCode() === 0);
+            ->partition(fn(Process $process) => empty($process->getErrorOutput()));
 
         $failed->whenNotEmpty(fn(Collection $failedBatch) => $this->logErrors($failedBatch));
 
-        $successful
-            ->map(fn(Process $process) => json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR));
+        return $successful
+            ->map(fn(Process $process) => json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR))
+            ->flatten(1);
     }
 
     private function validHostname(string $host): bool
@@ -92,7 +83,7 @@ final class MTR
         return filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false;
     }
 
-    private function validIpNetwork(string $host): bool
+    private function validIpNetwork(string|int $host): bool
     {
         try {
             Network::parse($host);
@@ -124,6 +115,8 @@ final class MTR
             $logOutput .= "Exit code: {$mtrProcess->getExitCode()}";
 
             $this->logger->error($logOutput);
+
+            echo "Process failed with exit code {$mtrProcess->getExitCode()}. Find more detail in logs." . PHP_EOL;
         }
     }
 }

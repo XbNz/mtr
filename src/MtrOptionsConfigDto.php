@@ -8,9 +8,13 @@ use phpDocumentor\Reflection\PseudoTypes\PositiveInteger;
 use PHPUnit\TextUI\XmlConfiguration\Php;
 use Spatie\DataTransferObject\DataTransferObject;
 use Webmozart\Assert\Assert;
+use Xbnz\Mtr\Exceptions\MtrConfigurationException;
 
-class MtrOptionsConfigDto
+final class MtrOptionsConfigDto
 {
+    /**
+     * @throws MtrConfigurationException
+     */
     public function __construct(
         public readonly ?string $interval = null,
         public readonly ?bool $noDns = null,
@@ -32,6 +36,7 @@ class MtrOptionsConfigDto
     ) {
         Assert::nullOrString($interval);
         if ($interval !== null) {
+            Assert::numeric($interval);
             Assert::greaterThan($interval, 0);
         }
         Assert::nullOrPositiveInteger($count);
@@ -43,5 +48,8 @@ class MtrOptionsConfigDto
         Assert::nullOrPositiveInteger($port);
         Assert::lessThan($port, 65535);
         Assert::nullOrPositiveInteger($timeout);
+        if ($udp === true && $tcp === true) {
+            throw new MtrConfigurationException('UDP & TCP are mutually exclusive!');
+        }
     }
 }
