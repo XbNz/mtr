@@ -133,11 +133,6 @@ class MtrTest extends MockeryTestCase
     /** @test **/
     public function the_wrap_method_returns_a_collection_of_custom_result_classes_for_bulk_queries(): void
     {
-
-
-        //TODO: Maybe write this test. Then test asynchronous execution. Make async chunks customizable and test it.
-        // Make Symfony console options customizable.
-
         // Arrange
         $mtrResults = MTR::build(new MtrOptionsConfigDto(noDns: true, count: 1))
             ->withIp('8.8.8.8/27');

@@ -51,18 +51,39 @@ return [
 
 You should not disable the 'report wide' or 'json' options. The package will cease to work.
 
-## Bulk async MTR
+## Bulk or single IP with async execution
 ```php
 use Xbnz\Mtr;
 
 public function __construct(private MTR $mtr)
 {}
 
+// Or without DI...
+
+public function __construct()
+{
+    $this->mtr = Mtr::build(new MtrOptionsConfigDto(...), new Logger);
+}
+
+
 public function example()
 {
-    $results = $this->mtr->withIp('1.1.1.1', '8.8.8.8');
+
+    // Consider a high timeout value for large scans. 
+    // Async threads above 50 might cause inaccuracies in RTT statistics.
+
+    $results = $this->mtr->withIp('1.1.1.1', '8.8.8.8')->wrap($consoleTimeout, $simultaneousAsync);
     // OR
-    $results = $this->mtr->withIp(...['1.1.1.1', '8.8.8.8']);
+    $results = $this->mtr->withIp(...['1.1.1.1', '8.8.8.8'])->wrap($consoleTimeout, $simultaneousAsync);
+    // OR
+    $results = $this->mtr->withIp('1.1.1.1')->wrap($consoleTimeout, $simultaneousAsync);
+    // OR
+    $results = $this->mtr->withIp(995738574453)->wrap($consoleTimeout, $simultaneousAsync);
+    // OR
+    $results = $this->mtr->withIp('google.com')->wrap($consoleTimeout, $simultaneousAsync);
+    // OR
+    $results = $this->mtr->withIp(0x1294812)->wrap($consoleTimeout, $simultaneousAsync);
+    
     
     Assert::containsOnlyInstancesOf(
         MtrResult::class,
@@ -77,39 +98,14 @@ public function example()
     $aliveTargetHopPairs = $results
         ->reject(fn($result) => $result->targetDown()) 
         ->map(fn($result) => [$result->targetHost => $result->hops]);
-        ->each(fn($targetWithHops) => Assert::containsOnlyInstancesOf(MtrHop::class, $targetWithHops));
+        ->each(fn($targetWithHops) => Assert::containsOnlyInstancesOf(MtrHopDto::class, $targetWithHops));
     
     $aliveTargetHopPairs
         ->each(function ($hops, $ip) {
             if ($hops->last()->packetLoss > 5) {
-                $this->logger->log("Target {$ip}, hop {$hops->last()->hopNumber} has {$hops->last()->packetLoss}% loss")
+                $this->logger->log("Target {$ip}, hop {$hops->last()->hopPositionCount} has {$hops->last()->packetLoss}% loss")
             }
         });
 }
 ```
 
-## Or just one IP
-
-```php
-use Xbnz\Mtr;
-
-public function __construct(private MTR $mtr)
-{}
-
-public function example()
-{
-    $result = $this->mtr->withIp('1.1.1.1');
-    
-    Assert::instancesOf(
-        MtrResult::class,
-        $result
-    );
- 
-    if ($result->targetUp() && $result->hops->last()->packetLoss > 5) {
-        $logMsg = "Target {$result->taegetHost}";
-        $logMsg .= " hop {$hops->last()->hopNumber}";
-        $logMsg .= " has {$hops->last()->packetLoss}% loss";
-        $this->logger->log($logMsg);
-    }
-}
-```
