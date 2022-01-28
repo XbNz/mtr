@@ -21,7 +21,6 @@
     ],
     "require": {
         "symfony/process": "^6.0",
-        "spatie/data-transfer-object": "^3.7",
         "webmozart/assert": "^1.10",
         "illuminate/collections": "^9.0.0-beta.4",
         "s1lentium/iptools": "^1.1",

@@ -10,6 +10,7 @@ use IPTools\IP;
 use IPTools\Network;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Process\Process;
 use Webmozart\Assert\Assert;
 use Xbnz\Mtr\Actions\CreateParamsArrayFromDtoAction;
@@ -60,13 +61,17 @@ final class MTR
         return $this;
     }
 
-    public function raw(): Collection
-    {
+    public function raw(
+        int $consoleTimeout = 3600,
+        int $simultaneousAsync = 30
+    ): Collection {
         Assert::true(count($this->hosts) > 0);
+        Assert::positiveInteger($consoleTimeout);
+
 
         [$successful, $failed] = Collection::make($this->hosts)
-            ->map(fn (string $host) => new Process(['sudo', 'mtr', $host, ...$this->parameterArray]))
-            ->chunk(200)
+            ->map(fn (string $host) => new Process(['sudo', 'mtr', $host, ...$this->parameterArray], timeout: $consoleTimeout))
+            ->chunk($simultaneousAsync)
             ->each($this->processChunk(...))
             ->flatten()
             ->partition(fn(Process $process) => empty($process->getErrorOutput()));
@@ -77,6 +82,21 @@ final class MTR
             ->map(fn(Process $process) => json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR))
             ->flatten(1);
     }
+
+
+    /**
+     * @return Collection<MtrResult>
+     */
+    public function wrap(
+        int $consoleTimeout = 3600,
+        int $simultaneousAsync = 30
+    ): Collection {
+        $results = $this->raw($consoleTimeout, $simultaneousAsync);
+
+        return Collection::make($results)
+            ->map(fn($result) => new MtrResult($result));
+    }
+
 
     private function validHostname(string $host): bool
     {

@@ -12,8 +12,10 @@ use Symfony\Component\Process\Process;
 use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
 use Xbnz\Mtr\MTR;
+use Xbnz\Mtr\MtrHop;
 use Xbnz\Mtr\MtrOptions;
 use Xbnz\Mtr\MtrOptionsConfigDto;
+use Xbnz\Mtr\MtrResult;
 use Xbnz\Mtr\Tests\MockeryTestCase;
 
 class MtrTest extends MockeryTestCase
@@ -72,6 +74,17 @@ class MtrTest extends MockeryTestCase
         $mtr->raw();
     }
 
+    /** @test **/
+    public function console_timeout_may_only_be_positive(): void
+    {
+        // Arrange
+        $mtr = MTR::build(new MtrOptionsConfigDto(count: 1, noDns: true));
+
+        // Act & assert
+        $this->expectException(InvalidArgumentException::class);
+        $mtr->raw(-300);
+    }
+
 
     /** @test **/
     public function it_logs_errors_from_the_console(): void
@@ -94,6 +107,55 @@ class MtrTest extends MockeryTestCase
         $mtr->raw();
 
         $this->doesNotPerformAssertions();
+    }
+
+    /** @test **/
+    public function the_wrap_method_returns_a_collection_of_one_result_class_for_single_queries(): void
+    {
+        // Arrange
+        $mtr = MTR::build(new MtrOptionsConfigDto(noDns: true, count: 1))
+            ->withIp('1.1.1.1');
+
+        // Act
+        $collectionOfOneMtrResult = $mtr->wrap();
+
+        // Assert
+        $this->assertContainsOnlyInstancesOf(MtrResult::class, $collectionOfOneMtrResult);
+        $this->assertContainsOnlyInstancesOf(MtrHop::class, $collectionOfOneMtrResult[0]->hops());
+
+        $this->assertEquals('1.1.1.1', $collectionOfOneMtrResult[0]->targetHost);
+        $this->assertEquals(
+            $collectionOfOneMtrResult[0]->hopCount,
+            count($collectionOfOneMtrResult[0]->hops())
+        );
+    }
+
+    /** @test **/
+    public function the_wrap_method_returns_a_collection_of_custom_result_classes_for_bulk_queries(): void
+    {
+
+
+        //TODO: Maybe write this test. Then test asynchronous execution. Make async chunks customizable and test it.
+        // Make Symfony console options customizable.
+
+        // Arrange
+        $mtrResults = MTR::build(new MtrOptionsConfigDto(noDns: true, count: 1))
+            ->withIp('8.8.8.8/27');
+
+        // Act
+        $collectionOfManyMtrResults = $mtrResults->wrap();
+
+        // Assert
+        $this->assertContainsOnlyInstancesOf(MtrResult::class, $collectionOfManyMtrResults);
+
+        foreach ($collectionOfManyMtrResults as $mtrResult) {
+            $this->assertContainsOnlyInstancesOf(MtrHop::class, $mtrResult->hops());
+
+            $this->assertEquals(
+                $mtrResult->hopCount,
+                count($mtrResult->hops())
+            );
+        }
     }
 
 }
