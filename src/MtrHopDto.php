@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Xbnz\Mtr;
 
-final class MtrHop
+use Webmozart\Assert\Assert;
+
+final class MtrHopDto
 {
     public function __construct(
         public readonly int $hopPositionCount,
         public readonly string $hopHost,
+        public readonly ?string $asNumber,
         public readonly ?float $packetLoss,
         public readonly ?int $droppedPackets,
         public readonly ?int $receivedPackets,
@@ -23,5 +26,7 @@ final class MtrHop
         public readonly ?float $averageJitter,
         public readonly ?float $maximumJitter,
         public readonly ?float $interarrivalJitter,
-    ) {}
+    ) {
+        Assert::nullOrNotContains($asNumber, '?');
+    }
 }

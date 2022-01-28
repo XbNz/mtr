@@ -4,7 +4,7 @@ namespace Xbnz\Mtr\Tests\Feature;
 
 use Illuminate\Support\Collection;
 use Xbnz\Mtr\MTR;
-use Xbnz\Mtr\MtrHop;
+use Xbnz\Mtr\MtrHopDto;
 use Xbnz\Mtr\MtrResult;
 
 class MtrResultWrapperTest extends \PHPUnit\Framework\TestCase
@@ -101,7 +101,6 @@ class MtrResultWrapperTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($firstHop['Javg'], $firstHopDto->averageJitter);
         $this->assertSame($firstHop['Jmax'], $firstHopDto->maximumJitter);
         $this->assertSame($firstHop['Jint'], $firstHopDto->interarrivalJitter);
-
     }
 
 

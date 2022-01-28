@@ -12,7 +12,7 @@ use Symfony\Component\Process\Process;
 use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
 use Xbnz\Mtr\MTR;
-use Xbnz\Mtr\MtrHop;
+use Xbnz\Mtr\MtrHopDto;
 use Xbnz\Mtr\MtrOptions;
 use Xbnz\Mtr\MtrOptionsConfigDto;
 use Xbnz\Mtr\MtrResult;
@@ -121,7 +121,7 @@ class MtrTest extends MockeryTestCase
 
         // Assert
         $this->assertContainsOnlyInstancesOf(MtrResult::class, $collectionOfOneMtrResult);
-        $this->assertContainsOnlyInstancesOf(MtrHop::class, $collectionOfOneMtrResult[0]->hops());
+        $this->assertContainsOnlyInstancesOf(MtrHopDto::class, $collectionOfOneMtrResult[0]->hops());
 
         $this->assertEquals('1.1.1.1', $collectionOfOneMtrResult[0]->targetHost);
         $this->assertEquals(
@@ -149,7 +149,7 @@ class MtrTest extends MockeryTestCase
         $this->assertContainsOnlyInstancesOf(MtrResult::class, $collectionOfManyMtrResults);
 
         foreach ($collectionOfManyMtrResults as $mtrResult) {
-            $this->assertContainsOnlyInstancesOf(MtrHop::class, $mtrResult->hops());
+            $this->assertContainsOnlyInstancesOf(MtrHopDto::class, $mtrResult->hops());
 
             $this->assertEquals(
                 $mtrResult->hopCount,

@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Xbnz\Mtr\Factories;
 
-use Xbnz\Mtr\MtrHop;
+use Xbnz\Mtr\MtrHopDto;
 use Xbnz\Mtr\MtrResult;
 
 final class MtrHopFactory
 {
-    public static function fromRawHop(array $rawHop): MtrHop
+    public static function fromRawHop(array $rawHop): MtrHopDto
     {
-        return new MtrHop(
+        return new MtrHopDto(
             $rawHop['count'],
             $rawHop['host'],
+            $rawHop['ASN'] === 'AS???' ? null : $rawHop['ASN'],
             $rawHop['Loss%'] ?? null,
             $rawHop['Drop'] ?? null,
             $rawHop['Rcv'] ?? null,

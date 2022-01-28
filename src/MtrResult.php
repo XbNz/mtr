@@ -30,7 +30,7 @@ final class MtrResult extends Collection
             $this->get('hubs')
         )->last();
 
-        return str_contains($lastHop['host'], '???');
+        return $lastHop['host'] === '???';
     }
 
     public function targetUp(): bool
@@ -43,7 +43,7 @@ final class MtrResult extends Collection
     }
 
     /**
-     * @return Collection<MtrHop>
+     * @return Collection<MtrHopDto>
      */
     public function hops(): Collection
     {

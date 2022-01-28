@@ -67,7 +67,7 @@ final class MTR
     ): Collection {
         Assert::true(count($this->hosts) > 0);
         Assert::positiveInteger($consoleTimeout);
-
+        Assert::positiveInteger($simultaneousAsync);
 
         [$successful, $failed] = Collection::make($this->hosts)
             ->map(fn (string $host) => new Process(['sudo', 'mtr', $host, ...$this->parameterArray], timeout: $consoleTimeout))
@@ -136,7 +136,7 @@ final class MTR
 
             $this->logger->error($logOutput);
 
-            echo "Process failed with exit code {$mtrProcess->getExitCode()}. Find more detail in logs." . PHP_EOL;
+            echo "A process failed with exit code {$mtrProcess->getExitCode()}. Find more detail in logs." . PHP_EOL;
         }
     }
 }

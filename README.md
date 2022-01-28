@@ -22,10 +22,14 @@ class AppServiceProvider extends Provider
         $this
             ->app
             ->when(MTR::class)
-            ->needs('$mtrOptions')
-            ->giveTagged('services.mtr_options');
+            ->needs('$configDto')
+            ->giveConfig('services.mtr_options');
             
-        $this->app->simgleton(MTR::class, fn() => new MTR);
+         $this
+            ->app
+            ->when(MTR::class)
+            ->needs('$logger')
+            ->give(Logger $logger);
     }
 }
 ```
@@ -36,12 +40,16 @@ class AppServiceProvider extends Provider
 // services.php
 return [
     // ...
-    'mtr_options' => new \Xbnz\Mtr\MtrOptionsConfigDto(
-        
-    )
+    'mtr_options' => new \Xbnz\Mtr\MtrOptionsConfigDto(...)
 ]
 
 ```
+
+
+| :warning: Important note on configuration options. |
+|----------------------------------------------------|
+
+You should not disable the 'report wide' or 'json' options. The package will cease to work.
 
 ## Bulk async MTR
 ```php
