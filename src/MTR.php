@@ -10,11 +10,13 @@ use IPTools\IP;
 use IPTools\Network;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Spatie\Fork\Fork;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Process\Process;
 use Webmozart\Assert\Assert;
 use Xbnz\Mtr\Actions\CreateParamsArrayFromDtoAction;
 use Xbnz\Mtr\Actions\CreateParamStringFromDtoAction;
+use Xbnz\Mtr\Factories\ForkSerializableProcessDtoFactory;
 
 final class MTR
 {
@@ -69,18 +71,32 @@ final class MTR
         Assert::positiveInteger($consoleTimeout);
         Assert::positiveInteger($simultaneousAsync);
 
-        [$successful, $failed] = Collection::make($this->hosts)
-            ->map(fn (string $host) => new Process(['sudo', 'mtr', $host, ...$this->parameterArray], timeout: $consoleTimeout))
-            ->chunk($simultaneousAsync)
-            ->each($this->processChunk(...))
-            ->flatten()
-            ->partition(fn(Process $process) => empty($process->getErrorOutput()));
+        $forks = Collection::make($this->hosts)
+            ->map(function (string $host) use ($consoleTimeout) {
+                return function () use ($host, $consoleTimeout) {
+                    $process = new Process(
+                        ['sudo', 'mtr', $host, ...$this->parameterArray], timeout: $consoleTimeout
+                    );
+                    $process->run();
+
+                    return ForkSerializableProcessDtoFactory::fromMtrForkCallable($process, $host);
+                };
+            })->toArray();
+
+        $forkResults = Fork::new()
+            ->concurrent($simultaneousAsync)
+            ->run(... $forks);
+
+        Assert::allIsInstanceOf($forkResults, ForkSerializableProcessDto::class);
+
+        [$successful, $failed] = Collection::make($forkResults)
+            ->partition(fn(ForkSerializableProcessDto $result) => $result->errorOutput === null);
 
         $failed->whenNotEmpty(fn(Collection $failedBatch) => $this->logErrors($failedBatch));
 
         return $successful
-            ->map(fn(Process $process) => json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR))
-            ->flatten(1);
+            ->keyBy(fn(ForkSerializableProcessDto $dto) => $dto->host)
+            ->map(fn(ForkSerializableProcessDto $dto) => $dto->output['report']);
     }
 
 
@@ -113,30 +129,21 @@ final class MTR
         }
     }
 
-    private function processChunk(Collection $processes): Collection
-    {
-        return $processes
-            ->each(fn(Process $process) => $process->start())
-            ->each(fn(Process $process) => $process->wait());
-    }
-
     /**
-     * @param Collection<Process> $failedProcesses
+     * @param Collection<ForkSerializableProcessDto> $failedProcesses
      * @return void
      */
     private function logErrors(Collection $failedProcesses): void
     {
-        Assert::allIsInstanceOf($failedProcesses, Process::class);
+        Assert::allIsInstanceOf($failedProcesses, ForkSerializableProcessDto::class);
 
-        foreach ($failedProcesses as $mtrProcess) {
-            $logOutput = "MTR command failed:";
-            $logOutput .= "Command: {$mtrProcess->getCommandLine()}";
-            $logOutput .= "Error: {$mtrProcess->getErrorOutput()}";
-            $logOutput .= "Exit code: {$mtrProcess->getExitCode()}";
+        foreach ($failedProcesses as $dto) {
+            $logOutput = "MTR command failed:" . PHP_EOL;
+            $logOutput .= "Command: {$dto->commandLine}" . PHP_EOL;
+            $logOutput .= "Error: {$dto->errorOutput}" . PHP_EOL;
+            $logOutput .= "Exit code: {$dto->exitCode}" . PHP_EOL;
 
             $this->logger->error($logOutput);
-
-            echo "A process failed with exit code {$mtrProcess->getExitCode()}. Find more detail in logs." . PHP_EOL;
         }
     }
 }

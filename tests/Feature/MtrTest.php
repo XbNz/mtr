@@ -120,13 +120,14 @@ class MtrTest extends MockeryTestCase
         $collectionOfOneMtrResult = $mtr->wrap();
 
         // Assert
-        $this->assertContainsOnlyInstancesOf(MtrResult::class, $collectionOfOneMtrResult);
-        $this->assertContainsOnlyInstancesOf(MtrHopDto::class, $collectionOfOneMtrResult[0]->hops());
 
-        $this->assertEquals('1.1.1.1', $collectionOfOneMtrResult[0]->targetHost);
+        $this->assertContainsOnlyInstancesOf(MtrResult::class, $collectionOfOneMtrResult);
+        $this->assertContainsOnlyInstancesOf(MtrHopDto::class, $collectionOfOneMtrResult['1.1.1.1']->hops());
+
+        $this->assertEquals('1.1.1.1', $collectionOfOneMtrResult['1.1.1.1']->targetHost);
         $this->assertEquals(
-            $collectionOfOneMtrResult[0]->hopCount,
-            count($collectionOfOneMtrResult[0]->hops())
+            $collectionOfOneMtrResult['1.1.1.1']->hopCount,
+            count($collectionOfOneMtrResult['1.1.1.1']->hops())
         );
     }
 
@@ -152,5 +153,4 @@ class MtrTest extends MockeryTestCase
             );
         }
     }
-
 }
