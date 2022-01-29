@@ -19,17 +19,9 @@ class AppServiceProvider extends Provider
 {
     public function register()
     {
-        $this
-            ->app
-            ->when(MTR::class)
-            ->needs('$configDto')
-            ->giveConfig('services.mtr_options');
-            
-         $this
-            ->app
-            ->when(MTR::class)
-            ->needs('$logger')
-            ->give(Logger $logger);
+        $this->app->bind(MTR::class, function (Application $app) {
+            return MTR::build(Config::get('services.mtr_options'), $app->make(LoggerInterface::class));
+        });
     }
 }
 ```
