@@ -153,4 +153,28 @@ class MtrTest extends MockeryTestCase
             );
         }
     }
+
+
+    /** @test **/
+    public function using(): void
+    {
+        // Arrange
+        $results = MTR::build(
+            new MtrOptionsConfigDto(
+                count: 1,
+                noDns: true,
+            )
+        )->withIp('1.1.1.1/23')->wrap(simultaneousAsync: 200);
+
+        $results
+            ->each(function (MtrResult $result) {
+                if ($result->targetUp()) {
+                    echo "{$result->targetHost} is alive with {$result->hopCount} hops" . PHP_EOL;
+                }
+            });
+
+        // Act
+
+        // Assert
+    }
 }

@@ -21,7 +21,6 @@ final class MtrResult extends Collection
         $this->hopCount = count($items['hubs']);
 
         $this->mtrResultIntegrityCheck($items);
-
     }
 
     public function targetDown(): bool
