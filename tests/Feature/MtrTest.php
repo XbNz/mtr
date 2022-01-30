@@ -111,7 +111,10 @@ class MtrTest extends MockeryTestCase
 
     }
 
-    /** @test **/
+    /**
+     * @test
+     * @group requires-outbound-icmp
+     **/
     public function the_wrap_method_returns_a_collection_of_one_result_class_for_single_queries(): void
     {
         // Arrange
@@ -133,7 +136,10 @@ class MtrTest extends MockeryTestCase
         );
     }
 
-    /** @test **/
+    /**
+     * @test
+     * @group requires-outbound-icmp
+     **/
     public function the_wrap_method_returns_a_collection_of_custom_result_classes_for_bulk_queries(): void
     {
         // Arrange
