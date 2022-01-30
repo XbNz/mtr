@@ -115,7 +115,7 @@ class MtrTest extends MockeryTestCase
     public function the_wrap_method_returns_a_collection_of_one_result_class_for_single_queries(): void
     {
         // Arrange
-        $mtr = MTR::build(new MtrOptionsConfigDto(noDns: true, count: 1))
+        $mtr = MTR::build(new MtrOptionsConfigDto(noDns: true, count: 3, interval: '3'))
             ->withIp('1.1.1.1');
 
         // Act
@@ -137,8 +137,8 @@ class MtrTest extends MockeryTestCase
     public function the_wrap_method_returns_a_collection_of_custom_result_classes_for_bulk_queries(): void
     {
         // Arrange
-        $mtrResults = MTR::build(new MtrOptionsConfigDto(noDns: true, count: 1))
-            ->withIp('8.8.8.8/27');
+        $mtrResults = MTR::build(new MtrOptionsConfigDto(noDns: true, count: 3, interval: '3'))
+            ->withIp('8.8.8.8/29');
 
         // Act
         $collectionOfManyMtrResults = $mtrResults->wrap();
