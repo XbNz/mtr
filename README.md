@@ -64,17 +64,17 @@ public function example()
     // Consider a high timeout value for large scans. 
     // Async threads above 50 might cause inaccuracies in RTT statistics.
 
-    $results = $this->mtr->withIp('1.1.1.1', '8.8.8.8')->wrap($consoleTimeout, $simultaneousAsync);
+    $results = $this->mtr->withIp('1.1.1.1', '8.8.8.8')->wrap($consoleTimeout, $concurrentProcesses);
     // OR
-    $results = $this->mtr->withIp(...['1.1.1.1', '8.8.8.8'])->wrap($consoleTimeout, $simultaneousAsync);
+    $results = $this->mtr->withIp(...['1.1.1.1', '8.8.8.8'])->wrap($consoleTimeout, $concurrentProcesses);
     // OR
-    $results = $this->mtr->withIp('1.1.1.1')->wrap($consoleTimeout, $simultaneousAsync);
+    $results = $this->mtr->withIp('1.1.1.1')->wrap($consoleTimeout, $concurrentProcesses);
     // OR
-    $results = $this->mtr->withIp(995738574453)->wrap($consoleTimeout, $simultaneousAsync);
+    $results = $this->mtr->withIp(995738574453)->wrap($consoleTimeout, $concurrentProcesses);
     // OR
-    $results = $this->mtr->withIp('google.com')->wrap($consoleTimeout, $simultaneousAsync);
+    $results = $this->mtr->withIp('google.com')->wrap($consoleTimeout, $concurrentProcesses);
     // OR
-    $results = $this->mtr->withIp(0x1294812)->wrap($consoleTimeout, $simultaneousAsync);
+    $results = $this->mtr->withIp(0x1294812)->wrap($consoleTimeout, $concurrentProcesses);
     
     
     Assert::containsOnlyInstancesOf(
@@ -101,3 +101,21 @@ public function example()
 }
 ```
 
+
+## Hooking into the `raw()` method
+The `raw()` method will return an unprocessed result set from MTR. This will also allow you to hook into each asynchronous
+process, which is useful for long-running processes.
+
+For example, you might want to keep track of each IP that is processed, like so.
+
+```php
+public function handle(MTR $mtr)
+{
+    // Thousands of IPs
+    $mtr->withIp('1.1.1.1/20') 
+        ->raw(callable: function (ForkSerializableProcessDto $dto) {
+            dump($dto->host . PHP_EOL);
+        })
+}
+
+```

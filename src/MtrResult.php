@@ -17,10 +17,10 @@ final class MtrResult extends Collection
     {
         parent::__construct($items);
 
+        $this->mtrResultIntegrityCheck($items);
+
         $this->targetHost = $items['mtr']['dst'];
         $this->hopCount = count($items['hubs']);
-
-        $this->mtrResultIntegrityCheck($items);
     }
 
     public function targetDown(): bool
@@ -55,11 +55,13 @@ final class MtrResult extends Collection
 
     private function mtrResultIntegrityCheck(array $items): void
     {
-        Assert::keyExists($items, 'hubs');
+        Assert::keyExists($this->items, 'hubs');
+        Assert::keyExists($this->items, 'mtr');
+
+        Assert::notEmpty($this->items['hubs'], 'Did not receive hop statistics. Try increasing count/interval');
 
         foreach ($items['hubs'] as $hub) {
-            Assert::keyExists($hub, 'count');
-            Assert::keyExists($hub, 'host');
+            Assert::notEmpty($hub['count'], 'Did not receive hop statistics. Try increasing count/interval');
         }
     }
 }

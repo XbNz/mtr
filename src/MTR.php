@@ -65,27 +65,41 @@ final class MTR
 
     public function raw(
         int $consoleTimeout = 3600,
-        int $simultaneousAsync = 30
+        int $concurrentProcesses = 30,
+        ?callable $callback = null,
     ): Collection {
         Assert::true(count($this->hosts) > 0);
         Assert::positiveInteger($consoleTimeout);
-        Assert::positiveInteger($simultaneousAsync);
+        Assert::positiveInteger($concurrentProcesses);
 
         $forks = Collection::make($this->hosts)
-            ->map(function (string $host) use ($consoleTimeout) {
-                return function () use ($host, $consoleTimeout) {
+            ->map(function (string $host) use ($consoleTimeout, $callback) {
+                return function () use ($host, $consoleTimeout, $callback): ForkSerializableProcessDto {
                     $process = new Process(
                         ['sudo', 'mtr', $host, ...$this->parameterArray], timeout: $consoleTimeout
                     );
-                    $process->run();
 
-                    return ForkSerializableProcessDtoFactory::fromMtrForkCallable($process, $host);
+                    $process->run();
+                    $dto = ForkSerializableProcessDtoFactory::fromMtrForkCallable($process, $host);
+
+                    if (is_callable($callback)) {
+                        $callback($dto);
+                    }
+
+                    return $dto;
                 };
             })->toArray();
 
         $forkResults = Fork::new()
-            ->concurrent($simultaneousAsync)
+            ->concurrent($concurrentProcesses)
             ->run(... $forks);
+
+
+        foreach ($forkResults as $result) {
+            if (! $result instanceof ForkSerializableProcessDto){
+                dump($result);
+            }
+        }
 
         Assert::allIsInstanceOf($forkResults, ForkSerializableProcessDto::class);
 
@@ -105,9 +119,9 @@ final class MTR
      */
     public function wrap(
         int $consoleTimeout = 3600,
-        int $simultaneousAsync = 30
+        int $concurrentProcesses = 30
     ): Collection {
-        $results = $this->raw($consoleTimeout, $simultaneousAsync);
+        $results = $this->raw($consoleTimeout, $concurrentProcesses);
 
         return Collection::make($results)
             ->map(fn($result) => new MtrResult($result));

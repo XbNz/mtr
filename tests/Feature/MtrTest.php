@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Xbnz\Mtr\Tests\Feature;
 
+use Cassandra\Uuid;
 use IPTools\IP;
 use IPTools\Network;
 use Psr\Log\NullLogger;
@@ -11,6 +12,7 @@ use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Process\Process;
 use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
+use Xbnz\Mtr\ForkSerializableProcessDto;
 use Xbnz\Mtr\MTR;
 use Xbnz\Mtr\MtrHopDto;
 use Xbnz\Mtr\MtrOptions;
@@ -89,6 +91,7 @@ class MtrTest extends MockeryTestCase
     /** @test **/
     public function it_logs_errors_from_the_console(): void
     {
+        $this->expectNotToPerformAssertions();
         $mockLogger = \Mockery::mock(NullLogger::class);
         $mockLogger->shouldReceive('error')->twice();
 
@@ -106,7 +109,6 @@ class MtrTest extends MockeryTestCase
 
         $mtr->raw();
 
-        $this->doesNotPerformAssertions();
     }
 
     /** @test **/
@@ -155,26 +157,21 @@ class MtrTest extends MockeryTestCase
     }
 
 
+    static $test = false;
     /** @test **/
-    public function using(): void
+    public function the_optional_callable_is_executed(): void
     {
-        // Arrange
-        $results = MTR::build(
-            new MtrOptionsConfigDto(
-                count: 1,
-                noDns: true,
-            )
-        )->withIp('1.1.1.1/23')->wrap(simultaneousAsync: 200);
+        $mtr = MTR::build(new MtrOptionsConfigDto(noDns: true, count: 1))
+            ->withIp('8.8.8.8');
 
-        $results
-            ->each(function (MtrResult $result) {
-                if ($result->targetUp()) {
-                    echo "{$result->targetHost} is alive with {$result->hopCount} hops" . PHP_EOL;
-                }
+        try {
+            $mtr->raw(callback: function (ForkSerializableProcessDto $dto) {
+                Assert::isInstanceOf($dto, ForkSerializableProcessDto::class);
             });
+        } catch (InvalidArgumentException) {
+            $this->fail('Mozart assertions failed');
+        }
 
-        // Act
-
-        // Assert
+        $this->assertTrue(true);
     }
 }
