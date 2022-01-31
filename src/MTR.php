@@ -94,13 +94,6 @@ final class MTR
             ->concurrent($concurrentProcesses)
             ->run(... $forks);
 
-
-        foreach ($forkResults as $result) {
-            if (! $result instanceof ForkSerializableProcessDto){
-                dump($result);
-            }
-        }
-
         Assert::allIsInstanceOf($forkResults, ForkSerializableProcessDto::class);
 
         [$successful, $failed] = Collection::make($forkResults)
